@@ -1,0 +1,6 @@
+apiVersion: v2
+name: e2e-tests
+description: Cucumber E2E tests as Kubernetes Job
+type: application
+version: 0.1.0
+appVersion: "1.0"

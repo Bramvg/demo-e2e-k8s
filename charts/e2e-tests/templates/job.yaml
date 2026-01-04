@@ -1,0 +1,13 @@
+apiVersion: batch/v1
+kind: Job
+spec:
+  ttlSecondsAfterFinished: 300
+  template:
+    spec:
+      containers:
+        - name: tests
+          image: cucumber-tests:1.0
+          env:
+            - name: APP_BASE_URL
+              value: http://demo-app:8080
+          restartPolicy: Never
