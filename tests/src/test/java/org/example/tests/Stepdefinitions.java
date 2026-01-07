@@ -8,7 +8,6 @@ public class StepDefinitions {
         response = RestAssured.get(baseUrl + "/hello");
     }
 
-
     @Then("I receive {string}")
     public void verify(String expected) {
         response.then().body(equalTo(expected));
