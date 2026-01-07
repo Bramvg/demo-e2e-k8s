@@ -1,0 +1,22 @@
+pipeline {
+    agent { kubernetes { yamlFile 'jenkins/agent.yaml' } }
+
+    stages {
+        stage('Deploy') {
+            steps {
+                sh 'argocd app sync demo-e2e'
+            }
+    }
+    stage('Wait for tests') {
+        steps {
+            sh 'kubectl wait job/e2e-tests --timeout=5m'
+            }
+        }
+    }
+
+    post {
+        always {
+            junit 'reports/results.xml'
+        }
+    }
+}
