@@ -1,0 +1,16 @@
+apiVersion: batch/v1
+kind: Job
+metadata:
+  name: greeting-tests
+spec:
+  backoffLimit: 0
+  template:
+    spec:
+      restartPolicy: Never
+      containers:
+        - name: cucumber-tests
+          image: greeting-tests:latest
+          imagePullPolicy: IfNotPresent
+          env:
+            - name: APP_BASE_URL
+              value: "http://greeting-app:8081"
