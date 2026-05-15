@@ -2,13 +2,28 @@ apiVersion: argoproj.io/v1alpha1
 kind: Application
 metadata:
   name: demo-e2e
+  namespace: argocd
+  finalizers:
+    - resources-finalizer.argocd.argoproj.io
 spec:
+  project: default
   source:
-    repoURL: https://github.com/your-org/demo-e2e-platform
-    path: charts
+    repoURL: __REPO_URL__
+    targetRevision: __TARGET_REVISION__
+    path: argocd/app-of-apps
+    helm:
+      valuesObject:
+        repoURL: __REPO_URL__
+        targetRevision: __TARGET_REVISION__
+        project:
+          name: demo-e2e
+        destination:
+          server: https://kubernetes.default.svc
+          namespace: demo-e2e
   destination:
     server: https://kubernetes.default.svc
-    namespace: demo
+    namespace: argocd
   syncPolicy:
     automated:
       prune: true
+      selfHeal: true

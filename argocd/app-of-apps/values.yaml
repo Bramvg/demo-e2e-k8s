@@ -1,0 +1,17 @@
+repoURL: https://github.com/your-org/demo-e2e-k8s.git
+targetRevision: main
+project:
+  name: demo-e2e
+destination:
+  server: https://kubernetes.default.svc
+  namespace: demo-e2e
+applications:
+  greetingApp:
+    name: greeting-app
+    path: charts/greeting-app
+    syncWave: "10"
+  e2eTests:
+    name: e2e-tests
+    path: charts/e2e-tests
+    syncWave: "20"
+

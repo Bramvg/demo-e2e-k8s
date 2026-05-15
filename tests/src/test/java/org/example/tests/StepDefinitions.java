@@ -6,11 +6,14 @@ import io.cucumber.java.en.Then;
 import io.restassured.RestAssured;
 import io.restassured.response.Response;
 
+import java.util.Optional;
+
 import static org.hamcrest.Matchers.equalTo;
 
 public class StepDefinitions {
     Response response;
-    String baseUrl = System.getenv("APP_BASE_URL");
+    String baseUrl = Optional.ofNullable(System.getenv("APP_BASE_URL"))
+            .orElse("http://localhost:8081");
 
     @When("I call the hello endpoint")
     public void callHello() {
@@ -22,6 +25,8 @@ public class StepDefinitions {
 
     @Then("I receive {string}")
     public void verify(String expected) {
-        response.then().body(equalTo(expected));
+        response.then()
+                .statusCode(200)
+                .body(equalTo(expected));
     }
 }

@@ -1,0 +1,54 @@
+apiVersion: argoproj.io/v1alpha1
+kind: Application
+metadata:
+  name: {{ .Values.applications.greetingApp.name }}
+  namespace: argocd
+  finalizers:
+    - resources-finalizer.argocd.argoproj.io
+  annotations:
+    argocd.argoproj.io/sync-wave: {{ .Values.applications.greetingApp.syncWave | quote }}
+  labels:
+    app.kubernetes.io/part-of: demo-e2e
+spec:
+  project: {{ .Values.project.name }}
+  source:
+    repoURL: {{ .Values.repoURL | quote }}
+    targetRevision: {{ .Values.targetRevision | quote }}
+    path: {{ .Values.applications.greetingApp.path | quote }}
+  destination:
+    server: {{ .Values.destination.server | quote }}
+    namespace: {{ .Values.destination.namespace | quote }}
+  syncPolicy:
+    automated:
+      prune: true
+      selfHeal: false
+    syncOptions:
+      - CreateNamespace=true
+---
+apiVersion: argoproj.io/v1alpha1
+kind: Application
+metadata:
+  name: {{ .Values.applications.e2eTests.name }}
+  namespace: argocd
+  finalizers:
+    - resources-finalizer.argocd.argoproj.io
+  annotations:
+    argocd.argoproj.io/sync-wave: {{ .Values.applications.e2eTests.syncWave | quote }}
+  labels:
+    app.kubernetes.io/part-of: demo-e2e
+spec:
+  project: {{ .Values.project.name }}
+  source:
+    repoURL: {{ .Values.repoURL | quote }}
+    targetRevision: {{ .Values.targetRevision | quote }}
+    path: {{ .Values.applications.e2eTests.path | quote }}
+  destination:
+    server: {{ .Values.destination.server | quote }}
+    namespace: {{ .Values.destination.namespace | quote }}
+  syncPolicy:
+    automated:
+      prune: true
+      selfHeal: false
+    syncOptions:
+      - CreateNamespace=true
+

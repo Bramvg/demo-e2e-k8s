@@ -1,0 +1,9 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<testsuite name="Cucumber" time="1.746" tests="1" skipped="0" failures="0" errors="0">
+<testcase classname="Hello API" name="Hello endpoint works" time="1.617">
+<system-out><![CDATA[
+When I call the hello endpoint..............................................passed
+Then I receive "hello world"................................................passed
+]]></system-out>
+</testcase>
+</testsuite>

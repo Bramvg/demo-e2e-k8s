@@ -1,0 +1,23 @@
+apiVersion: argoproj.io/v1alpha1
+kind: AppProject
+metadata:
+  name: {{ .Values.project.name }}
+  namespace: argocd
+  labels:
+    app.kubernetes.io/part-of: demo-e2e
+spec:
+  description: Demo project for the greeting app and its ephemeral end-to-end test environment.
+  sourceRepos:
+    - {{ .Values.repoURL | quote }}
+  destinations:
+    - namespace: {{ .Values.destination.namespace | quote }}
+      server: {{ .Values.destination.server | quote }}
+    - namespace: argocd
+      server: {{ .Values.destination.server | quote }}
+  clusterResourceWhitelist:
+    - group: '*'
+      kind: '*'
+  namespaceResourceWhitelist:
+    - group: '*'
+      kind: '*'
+

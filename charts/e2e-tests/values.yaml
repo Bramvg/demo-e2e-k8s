@@ -1,0 +1,19 @@
+image:
+  repository: e2e-cucumber-tests
+  tag: latest
+  pullPolicy: IfNotPresent
+
+wait:
+  image: curlimages/curl:8.8.0
+
+cleanup:
+  image: bitnami/kubectl:1.30.3
+  targetLabelKey: cleanup.demo-e2e/subject
+  targetLabelValue: greeting-app
+
+job:
+  activeDeadlineSeconds: 900
+  ttlSecondsAfterFinished: 300
+
+appBaseUrl: http://greeting-app:8081
+
