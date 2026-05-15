@@ -62,7 +62,11 @@ make demo
 Useful companion targets:
 
 ```bash
+make doctor
+make rerun
+make trigger
 make status
+make watch-run
 make apps
 make pods
 make jobs
@@ -76,6 +80,10 @@ Show all available targets:
 ```bash
 make help
 ```
+
+`make demo` now runs `make doctor` first to validate required tools, Docker daemon access, and Kind context health.
+
+`make ui`, `make status`, and `make apps` automatically use `kind-demo-e2e` when that context exists.
 
 ## Bootstrap the demo manually
 
@@ -125,6 +133,36 @@ kubectl get secret argocd-initial-admin-secret -n argocd -o jsonpath='{.data.pas
 Push a new commit to the branch configured in the root application.
 
 Because both child applications use automated sync, Argo CD will detect the Git change and start another deploy -> test -> teardown cycle.
+
+If you want to force Argo CD to notice the change immediately after pushing, run:
+
+```bash
+make rerun
+```
+
+If you want one command that creates an empty commit, pushes it, and refreshes Argo CD, run:
+
+```bash
+make trigger
+```
+
+You can override the empty commit message if you want:
+
+```bash
+make trigger TRIGGER_MESSAGE="chore: demo rerun"
+```
+
+To watch the whole demo cycle live during a presentation, run:
+
+```bash
+make watch-run
+```
+
+You can change the refresh interval in seconds:
+
+```bash
+make watch-run WATCH_INTERVAL=2
+```
 
 ## Tear everything down
 

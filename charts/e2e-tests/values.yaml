@@ -7,7 +7,7 @@ wait:
   image: curlimages/curl:8.8.0
 
 cleanup:
-  image: bitnami/kubectl:1.30.3
+  image: registry.k8s.io/kubectl:v1.30.3
   targetLabelKey: cleanup.demo-e2e/subject
   targetLabelValue: greeting-app
 

@@ -5,8 +5,23 @@ ROOT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 CLUSTER_NAME="${CLUSTER_NAME:-demo-e2e}"
 KIND_CONFIG="${KIND_CONFIG:-${ROOT_DIR}/kind/kind-config.yaml}"
 ARGOCD_VERSION="${ARGOCD_VERSION:-stable}"
-REPO_URL="${REPO_URL:-$(git -C "${ROOT_DIR}" config --get remote.origin.url || true)}"
 TARGET_REVISION="${TARGET_REVISION:-$(git -C "${ROOT_DIR}" rev-parse --abbrev-ref HEAD)}"
+
+normalize_repo_url() {
+  local input="$1"
+  if [[ "${input}" =~ ^git@github.com:([^[:space:]]+)\.git$ ]]; then
+    echo "https://github.com/${BASH_REMATCH[1]}.git"
+    return
+  fi
+  if [[ "${input}" =~ ^git@github.com:([^[:space:]]+)$ ]]; then
+    echo "https://github.com/${BASH_REMATCH[1]}"
+    return
+  fi
+  echo "${input}"
+}
+
+REPO_URL="${REPO_URL:-$(git -C "${ROOT_DIR}" config --get remote.origin.url || true)}"
+REPO_URL="$(normalize_repo_url "${REPO_URL}")"
 
 require_command() {
   if ! command -v "$1" >/dev/null 2>&1; then
@@ -51,7 +66,9 @@ kind load docker-image --name "${CLUSTER_NAME}" e2e-cucumber-tests:latest
 
 echo "Installing Argo CD into the cluster"
 kubectl create namespace argocd --dry-run=client -o yaml | kubectl apply -f -
-kubectl apply -n argocd -f "https://raw.githubusercontent.com/argoproj/argo-cd/${ARGOCD_VERSION}/manifests/install.yaml"
+# Server-side apply avoids huge CRD annotations; force conflicts for repeat installs
+# where earlier runs used client-side apply managers.
+kubectl apply --server-side --force-conflicts -n argocd -f "https://raw.githubusercontent.com/argoproj/argo-cd/${ARGOCD_VERSION}/manifests/install.yaml"
 
 kubectl rollout status statefulset/argocd-application-controller -n argocd --timeout=300s
 
