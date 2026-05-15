@@ -65,7 +65,11 @@ Useful companion targets:
 make doctor
 make rerun
 make trigger
+make demo-live
 make status
+make watch-apps
+make watch-jobs
+make watch-pods
 make watch-run
 make apps
 make pods
@@ -83,7 +87,7 @@ make help
 
 `make demo` now runs `make doctor` first to validate required tools, Docker daemon access, and Kind context health.
 
-`make ui`, `make status`, and `make apps` automatically use `kind-demo-e2e` when that context exists.
+`make ui`, `make status`, `make apps`, `make pods`, `make jobs`, and `make password` automatically use `kind-demo-e2e` when that context exists.
 
 ## Bootstrap the demo manually
 
@@ -146,6 +150,12 @@ If you want one command that creates an empty commit, pushes it, and refreshes A
 make trigger
 ```
 
+If you want to trigger a run and immediately drop into the live combined watcher, run:
+
+```bash
+make demo-live
+```
+
 You can override the empty commit message if you want:
 
 ```bash
@@ -156,6 +166,19 @@ To watch the whole demo cycle live during a presentation, run:
 
 ```bash
 make watch-run
+```
+
+If you want a narrower view, you can watch just Argo CD applications or just jobs:
+
+```bash
+make watch-apps
+make watch-jobs
+```
+
+Or just the demo pods:
+
+```bash
+make watch-pods
 ```
 
 You can change the refresh interval in seconds:

@@ -19,7 +19,7 @@ endif
 
 export CLUSTER_NAME REPO_URL TARGET_REVISION
 
-.PHONY: help doctor demo up rerun trigger down rebuild-images status watch watch-run ui password apps pods jobs local-app local-test verify
+.PHONY: help doctor demo up rerun trigger demo-live down rebuild-images status watch watch-apps watch-jobs watch-pods watch-run ui password apps pods jobs local-app local-test verify
 
 help: ## Show available make targets
 	@awk 'BEGIN {FS = ":.*## "; printf "\nAvailable targets:\n\n"} /^[a-zA-Z0-9_.-]+:.*## / {printf "  %-16s %s\n", $$1, $$2} END {printf "\nOverrides: CLUSTER_NAME=..., REPO_URL=..., TARGET_REVISION=...\n\n"}' $(MAKEFILE_LIST)
@@ -63,6 +63,16 @@ trigger: ## Create an empty commit, push the current branch, then refresh Argo C
 	git push origin "$$(git rev-parse --abbrev-ref HEAD)"
 	+$(MAKE) rerun
 
+demo-live: ## Create an empty commit, push it, refresh Argo CD, then start the live watcher
+	@test "$$(git rev-parse --abbrev-ref HEAD)" != "HEAD" || (echo "Detached HEAD detected. Check out a branch before running make demo-live." >&2; exit 1)
+	@git remote get-url origin >/dev/null 2>&1 || (echo "Git remote 'origin' is not configured." >&2; exit 1)
+	@echo "Creating empty commit on '$$(git rev-parse --abbrev-ref HEAD)'"
+	git commit --allow-empty -m "$(TRIGGER_MESSAGE)"
+	@echo "Pushing '$$(git rev-parse --abbrev-ref HEAD)' to origin"
+	git push origin "$$(git rev-parse --abbrev-ref HEAD)"
+	kubectl $(KUBECTL_CONTEXT_ARG) annotate application demo-e2e -n $(ARGOCD_NAMESPACE) argocd.argoproj.io/refresh=hard --overwrite
+	@bash -c 'set -euo pipefail; trap "exit 0" INT TERM; while true; do clear >/dev/null 2>&1 || printf "\033[2J\033[H"; echo "Demo run watcher - $$(date)"; echo; echo "Applications:"; kubectl $(KUBECTL_CONTEXT_ARG) get applications -n $(ARGOCD_NAMESPACE); echo; echo "Jobs:"; kubectl $(KUBECTL_CONTEXT_ARG) get jobs -n $(DEMO_NAMESPACE); echo; echo "Pods:"; kubectl $(KUBECTL_CONTEXT_ARG) get pods -n $(DEMO_NAMESPACE); sleep $(WATCH_INTERVAL); done'
+
 down: ## Delete the Kind cluster
 	./scripts/destroy-kind-cluster.sh
 
@@ -75,7 +85,16 @@ status: ## Show Argo CD apps and demo namespace resources
 	kubectl $(KUBECTL_CONTEXT_ARG) get all -n $(DEMO_NAMESPACE)
 
 watch: ## Watch pods in the demo namespace
-	kubectl get pods -n $(DEMO_NAMESPACE) -w
+	kubectl $(KUBECTL_CONTEXT_ARG) get pods -n $(DEMO_NAMESPACE) -w
+
+watch-apps: ## Continuously show Argo CD applications for the demo
+	@bash -c 'set -euo pipefail; trap "exit 0" INT TERM; while true; do clear >/dev/null 2>&1 || printf "\033[2J\033[H"; echo "Application watcher - $$(date)"; echo; kubectl $(KUBECTL_CONTEXT_ARG) get applications -n $(ARGOCD_NAMESPACE); sleep $(WATCH_INTERVAL); done'
+
+watch-jobs: ## Continuously show demo namespace jobs
+	@bash -c 'set -euo pipefail; trap "exit 0" INT TERM; while true; do clear >/dev/null 2>&1 || printf "\033[2J\033[H"; echo "Job watcher - $$(date)"; echo; kubectl $(KUBECTL_CONTEXT_ARG) get jobs -n $(DEMO_NAMESPACE); sleep $(WATCH_INTERVAL); done'
+
+watch-pods: ## Continuously show demo namespace pods
+	@bash -c 'set -euo pipefail; trap "exit 0" INT TERM; while true; do clear >/dev/null 2>&1 || printf "\033[2J\033[H"; echo "Pod watcher - $$(date)"; echo; kubectl $(KUBECTL_CONTEXT_ARG) get pods -n $(DEMO_NAMESPACE); sleep $(WATCH_INTERVAL); done'
 
 watch-run: ## Continuously show apps, jobs, and pods for the current demo run
 	@bash -c 'set -euo pipefail; trap "exit 0" INT TERM; while true; do clear >/dev/null 2>&1 || printf "\033[2J\033[H"; echo "Demo run watcher - $$(date)"; echo; echo "Applications:"; kubectl $(KUBECTL_CONTEXT_ARG) get applications -n $(ARGOCD_NAMESPACE); echo; echo "Jobs:"; kubectl $(KUBECTL_CONTEXT_ARG) get jobs -n $(DEMO_NAMESPACE); echo; echo "Pods:"; kubectl $(KUBECTL_CONTEXT_ARG) get pods -n $(DEMO_NAMESPACE); sleep $(WATCH_INTERVAL); done'
@@ -84,16 +103,16 @@ ui: ## Port-forward the Argo CD UI to https://localhost:8080
 	kubectl $(KUBECTL_CONTEXT_ARG) port-forward svc/argocd-server -n $(ARGOCD_NAMESPACE) 8080:443
 
 password: ## Print the initial Argo CD admin password
-	kubectl get secret argocd-initial-admin-secret -n $(ARGOCD_NAMESPACE) -o jsonpath='{.data.password}' | base64 -d && printf '\n'
+	kubectl $(KUBECTL_CONTEXT_ARG) get secret argocd-initial-admin-secret -n $(ARGOCD_NAMESPACE) -o jsonpath='{.data.password}' | base64 -d && printf '\n'
 
 apps: ## List Argo CD applications
 	kubectl $(KUBECTL_CONTEXT_ARG) get applications -n $(ARGOCD_NAMESPACE)
 
 pods: ## List pods in the demo namespace
-	kubectl get pods -n $(DEMO_NAMESPACE)
+	kubectl $(KUBECTL_CONTEXT_ARG) get pods -n $(DEMO_NAMESPACE)
 
 jobs: ## List jobs in the demo namespace
-	kubectl get jobs -n $(DEMO_NAMESPACE)
+	kubectl $(KUBECTL_CONTEXT_ARG) get jobs -n $(DEMO_NAMESPACE)
 
 local-app: ## Run the Quarkus app locally after packaging it
 	mvn -f app/pom.xml -DskipTests package
